@@ -74,5 +74,12 @@ namespace dsexp.Ast
             node.Left.Visit(defineBinder);
             return true;
         }
+
+        public override bool Visit(BinaryExpression node)
+        {
+            node.Left.Visit(this);
+            node.Right.Visit(this);
+            return true;
+        }
     }
 }

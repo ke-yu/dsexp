@@ -437,4 +437,42 @@ namespace dsexp.Ast
         }
         */
     }
+
+    public enum Operator
+    {
+        Add,
+        Substract,
+        Multiply,
+        Divide
+    }
+
+    public class BinaryExpression : DSExpression /*, IInstrucitonProvider */
+    {
+        public DSExpression Left
+        {
+            get; private set;
+        }
+
+        public DSExpression Right
+        {
+            get; private set;
+        }
+
+        public Operator Operator
+        {
+            get; private set;
+        } 
+
+        public BinaryExpression(DSExpression left, DSExpression right, Operator op)
+        {
+            Left = left;
+            Right = right;
+            Operator = op;
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
 }

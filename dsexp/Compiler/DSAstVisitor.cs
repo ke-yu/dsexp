@@ -23,6 +23,11 @@ namespace dsexp.Ast
             return true;
         }
 
+        public virtual bool Visit(BinaryExpression node)
+        {
+            return true;
+        } 
+
         public virtual bool Visit(DSAst ast)
         {
             return true;
