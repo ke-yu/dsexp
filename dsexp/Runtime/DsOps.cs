@@ -8,7 +8,7 @@ namespace dsexp.Runtime
 {
     class DSOps
     {
-        public static object GetGlobal(DSContext context, string name)
+        public static object GetGlobal(DSCodeContext context, string name)
         {
             object res;
             if (context.TryGetVariable(name, out res))
@@ -19,9 +19,17 @@ namespace dsexp.Runtime
             return null;
         }
 
-        public static void SetGlobal(DSContext context, string name, object value)
+        public static void SetGlobal(DSCodeContext context, string name, object value)
         {
             context.SetVariable(name, value);
+        }
+    }
+
+    public class StringOps
+    {
+        public static string Add(string lhs, string rhs)
+        {
+            return lhs + rhs;
         }
     }
 }

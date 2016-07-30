@@ -15,9 +15,9 @@ namespace dsexp
 {
     class Program
     {
-        public delegate void LookupDelegate(DSContext context);
+        public delegate void LookupDelegate(DSCodeContext context);
 
-        static object Run(Statement node, DSContext context)
+        static object Run(Statement node, DSCodeContext context)
         {
             DSAst ast = new DSAst(node);
             ast.Bind();
@@ -33,8 +33,12 @@ namespace dsexp
 
         static void Main(string[] args)
         {
-            DSContext context = new DSContext();
+            // REPL 
+            // (new DSCommandLine()).Run(args);
 
+            DSCodeContext context = new DSCodeContext();
+
+            /*
             NameExpression name = new NameExpression("x");
             Ast.ConstantExpression con = new Ast.ConstantExpression("foo");
             AssignmentStatement assign = new AssignmentStatement(name, con);
@@ -44,6 +48,15 @@ namespace dsexp
             NameExpression name3 = new NameExpression("x");
             AssignmentStatement assign2 = new AssignmentStatement(name2, name3);
             var r2 = Run(assign2, context);
+            */
+
+            Ast.ConstantExpression lhs = new Ast.ConstantExpression("foo");
+            Ast.ConstantExpression rhs = new Ast.ConstantExpression("bar");
+            Ast.BinaryExpression add = new Ast.BinaryExpression(lhs, rhs, Operator.Add);
+
+            NameExpression name = new NameExpression("x");
+            AssignmentStatement assign = new AssignmentStatement(name, add);
+            var r1 = Run(assign, context);
         }
     }
 }

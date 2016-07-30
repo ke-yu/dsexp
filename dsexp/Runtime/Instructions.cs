@@ -28,7 +28,7 @@ namespace dsexp.Runtime
 
         public override int Run(InterpretedFrame frame)
         {
-            frame.Push(DSOps.GetGlobal((DSContext)frame.Pop(), name));
+            frame.Push(DSOps.GetGlobal((DSCodeContext)frame.Pop(), name));
             return 1;
         }
     }

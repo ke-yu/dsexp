@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace dsexp.Runtime
 {
-    public class DSContext
+    public class DSCodeContext
     {
         private Dictionary<object, object> globalDict = new Dictionary<object, object>();
         private Dictionary<object, object> dict = new Dictionary<object, object>();
 
-        public DSContext()
+        public DSCodeContext()
         {
 
         }

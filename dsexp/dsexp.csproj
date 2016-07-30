@@ -61,9 +61,11 @@
   <ItemGroup>
     <Compile Include="Compiler\DSAst.cs" />
     <Compile Include="Compiler\DSAstVisitor.cs" />
+    <Compile Include="Compiler\DSDynamicExpression.cs" />
     <Compile Include="Compiler\DSNameBinder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Runtime\Binder.cs" />
     <Compile Include="Runtime\DSContext.cs" />
     <Compile Include="Runtime\DSScriptCode.cs" />
     <Compile Include="Runtime\FunctionCode.cs" />

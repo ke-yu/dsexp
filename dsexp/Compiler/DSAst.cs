@@ -1,4 +1,5 @@
-﻿using dsexp.Runtime;
+﻿using dsexp.Compiler;
+using dsexp.Runtime;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Ast;
 using Microsoft.Scripting.Interpreter;
@@ -182,7 +183,7 @@ namespace dsexp.Ast
         private Dictionary<DSVariable, Expression> globals = new Dictionary<DSVariable, Expression>(); 
         private Statement body;
         internal static ParameterExpression functionCode = Expression.Variable(typeof(FunctionCode), "$functionCode");
-        internal static ParameterExpression globalContext = Expression.Parameter(typeof(DSContext), "$globalContext");
+        internal static ParameterExpression globalContext = Expression.Parameter(typeof(DSCodeContext), "$globalContext");
 
         public DSAst(Statement body)
         {
@@ -446,7 +447,7 @@ namespace dsexp.Ast
         Divide
     }
 
-    public class BinaryExpression : DSExpression /*, IInstrucitonProvider */
+    public class BinaryExpression : DSExpression , IInstructionProvider 
     {
         public DSExpression Left
         {
@@ -472,7 +473,26 @@ namespace dsexp.Ast
 
         public override void Visit(DSAstVisitor visitor)
         {
-            visitor.Visit(this);
+            if (visitor.Visit(this))
+            {
+                Left.Visit(visitor);
+                Right.Visit(visitor);
+            }
+        }
+
+        public void AddInstructions(LightCompiler compiler)
+        {
+            compiler.Compile(Reduce());
+        }
+
+        public override Expression Reduce()
+        {
+            return MakeBinaryOperation();
+        }
+
+        private Expression MakeBinaryOperation()
+        {
+            return new DSDynamicExpression2(Binders.BinaryOperationBinder(Operator), Left, Right);
         }
     }
 }
