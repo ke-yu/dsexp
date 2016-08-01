@@ -32,5 +32,10 @@ namespace dsexp.Ast
         {
             return true;
         } 
+
+        public virtual bool Visit(ArrayExpression node)
+        {
+            return true;
+        }
     }
 }

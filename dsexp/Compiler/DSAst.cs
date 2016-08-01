@@ -83,6 +83,16 @@ namespace dsexp.Ast
                 return ExpressionType.Extension;
             }
         }
+
+        public static Expression[] ConvertToObjectArray(IList<Expression> expressions)
+        {
+            Expression[] objArray = new Expression[expressions.Count()];
+            for (int i = 0; i < expressions.Count(); i++)
+            {
+                objArray[i] = Utils.Convert(expressions[i], typeof(object));
+            }
+            return objArray;
+        }
     }
 
     public abstract class Statement : DSNode
@@ -356,7 +366,8 @@ namespace dsexp.Ast
 
         public override Expression Reduce()
         {
-            return Expression.Constant(value);
+            var expr = Utils.Convert(Expression.Constant(value), typeof(object));
+            return expr;
         }
 
         public override void Visit(DSAstVisitor visitor)
@@ -493,6 +504,46 @@ namespace dsexp.Ast
         private Expression MakeBinaryOperation()
         {
             return new DSDynamicExpression2(Binders.BinaryOperationBinder(Operator), Left, Right);
+        }
+    }
+
+    public class ArrayExpression : DSExpression
+    {
+        private DSExpression[] items;
+
+        public ArrayExpression(DSExpression[] items)
+        {
+            this.items = items;            
+        }
+
+        public override Expression Reduce()
+        {
+            if (items.Count() == 0)
+            {
+                var method = typeof(DSOps).GetMethod("CreateEmptyArray");
+                var call = Expression.Call(method, new Expression[] { });
+                return call;
+            }
+            else
+            {
+                var method = typeof(DSOps).GetMethod("CreateArray");
+                var call = Expression.Call(method, Expression.NewArrayInit(typeof(object), ConvertToObjectArray(items)));
+                return call;
+            }
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            if (visitor.Visit(this))
+            {
+                if (items != null)
+                {
+                    for (int i = 0; i < items.Count(); i++)
+                    {
+                        items[i].Visit(visitor);
+                    }
+                }
+            } 
         }
     }
 }

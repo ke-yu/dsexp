@@ -23,6 +23,16 @@ namespace dsexp.Runtime
         {
             context.SetVariable(name, value);
         }
+
+        public static DSArray CreateArray(object[] data)
+        {
+            return new DSArray(data);
+        }
+
+        public static DSArray CreateEmtpyArray()
+        {
+            return new DSArray(new object[] { });
+        }
     }
 
     public class StringOps
