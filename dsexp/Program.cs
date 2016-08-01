@@ -58,7 +58,7 @@ namespace dsexp
             var r3 = Run(assign, context);
             */
 
-
+            /*
             Ast.ConstantExpression v1 = new Ast.ConstantExpression("foo");
             Ast.ConstantExpression v2 = new Ast.ConstantExpression(true);
             Ast.ConstantExpression v3 = new Ast.ConstantExpression(21);
@@ -66,7 +66,13 @@ namespace dsexp
             NameExpression arr = new NameExpression("arr");
             AssignmentStatement assign = new AssignmentStatement(arr, arrExp);
             var r4 = Run(assign, context);
+            */
 
+            var st1 = dsexp.Ast.Parser.Parse("x = 21");
+            var r = Run(st1, context);
+
+            st1 = dsexp.Ast.Parser.Parse("y = x");
+            r = Run(st1, context);
         }
     }
 }

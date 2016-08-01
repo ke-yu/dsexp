@@ -452,6 +452,7 @@ namespace dsexp.Ast
 
     public enum Operator
     {
+        None,
         Add,
         Substract,
         Multiply,
@@ -544,6 +545,31 @@ namespace dsexp.Ast
                     }
                 }
             } 
+        }
+    }
+
+    public class RangeExpression : DSExpression
+    {
+        public DSExpression Start
+        {
+            get; private set;
+        }
+
+        public DSExpression End
+        {
+            get; private set;
+        }
+
+        public RangeExpression(DSExpression start, DSExpression end)
+        {
+            Start = start;
+            End = end;
+
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            throw new NotImplementedException();
         }
     }
 }

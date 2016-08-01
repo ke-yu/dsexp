@@ -1,0 +1,292 @@
+COMPILER SimpleDSParser
+
+CHARACTERS
+    identifierStart = '_' + 'a'..'z' + 'A'..'Z'.
+	identifierPart = '_' + 'a'..'z' + 'A'..'Z' + '0'..'9'.
+    digit = '0'..'9'.
+    cr  = '\r'. 
+    lf  = '\n'.
+    tab = '\t'.
+    anyButDoubleQuote = ANY - '\"'.
+    anyButQuote = ANY - '\''.
+    anychar = ANY.
+    other = ANY - '/' - '*'.
+    anyExcludingEndOfLine = ANY - lf.
+
+TOKENS
+    identifier = identifierStart { identifierPart }.
+    number = digit {digit} .
+    float = digit {digit} '.' digit {digit} [('E' | 'e') ['+'|'-'] digit {digit}].
+    textstring = '"' {anyButDoubleQuote | "\\\""} '"'.
+    char = '\'' (anyButQuote | "\\\'" | "\\\"" | "\\\\" | "\\0" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v" | "\\u") '\''.
+    period = '.'.
+    postfixed_replicationguide = digit {digit} 'L'.
+
+    list_at = '@'.
+    dominant_list_at = "@@".
+
+    openbracket = '['.
+    closebracket = ']'.
+    openparen = '('.
+    closeparen = ')'.
+
+    not = '!'.
+    neg = '-'.
+    pipe = '|'.
+    lessthan = '<'.
+    greaterthan = '>'.
+    lessequal = "<=".
+    greaterequal = ">=".
+    equal = "==".
+    notequal = "!=".
+    endline = ';'.
+    rangeop = "..".
+
+    kw_def = "def".
+    kw_if = "if".
+    kw_elseif = "elseif".
+    kw_else = "else".
+    kw_while = "while".
+    kw_for = "for".
+    kw_import = "import".
+    kw_from = "from".
+    kw_break = "break".
+    kw_continue = "continue".
+
+    literal_true = "true".
+    literal_false = "false".
+    literal_null = "null".
+
+PRAGMAS
+    inlinecomment =  "//" {anyExcludingEndOfLine}.			
+    blockcomment = "/*" {'/' | other | '*' {'*'} other} '*' {'*'} '/'. 
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+SimpleDSParser
+=   
+    (.
+        Statement statement;
+    .)
+    EntryPoint<out statement>
+    (.
+        RootStatement = statement;
+    .)
+.
+
+EntryPoint<out Statement statement>
+    (.
+        statement = null;
+    .)
+= 
+    Statement<out statement> |
+    FunctionDefinition
+.
+
+FunctionDefinition
+=
+    "def"
+    (.
+        string functionName;
+        List<string> parameters;
+    .)
+    MethodSignature<out functionName, out parameters>
+    (.
+        List<Statement> statements;
+    .)
+    BlockStatement<out statements>
+.
+
+MethodSignature<.out string functionName, out List<string> parameters.>
+=
+    identifier
+    (.
+        functionName = t.val;
+    .)
+    Parameters<out parameters>
+.
+
+Parameters<.out List<string> parameters.>
+=
+    (.
+        parameters = new List<string>();
+    .)
+    '('
+    [
+        identifier
+        (.
+            parameters.Add(t.val);
+        .)
+        {
+            ','
+            identifier
+            (.
+                parameters.Add(t.val);
+            .)
+        }
+    ]
+.
+
+BlockStatement<.out List<Statement> statements.>
+=
+    (.
+        statements = new List<Statement>();
+    .)
+    '{'
+    {
+        (.
+            Statement statement;
+        .)
+        Statement<out statement>
+        (.
+            if (statement != null)
+            {
+                statements.Add(statement);
+            }
+        .)
+    }
+    '}'
+.
+
+Statement<out Statement statement>
+= 
+    AssignmentStatement<out statement>
+.
+
+AssignmentStatement<out Statement assign> 
+= 
+    identifier
+    (.
+        NameExpression lhs = new NameExpression(t.val);
+    .)
+    '='
+    (.
+        DSExpression rhs;
+    .)
+    Expression<out rhs>
+    (.
+        assign = new AssignmentStatement(lhs, rhs);
+    .)
+.
+
+Expression<out DSExpression expression>
+= 
+    ArithmeticExpression<out expression> 
+    [
+        rangeop
+        (.
+            DSExpression end;
+        .)
+        ArithmeticExpression<out end>
+        (.
+            expression = new RangeExpression(expression, end);
+        .)
+    ]
+.
+
+ArithmeticExpression<out DSExpression expression>
+= 
+    MultiplicativeExpression<out expression> 
+    {
+        (.
+            DSExpression rhs;
+            Operator op;
+        .)
+        AdditiveOperator<out op>
+        MultiplicativeExpression<out rhs> 
+        (.
+            expression = new BinaryExpression(expression, rhs, op);
+        .)
+    }
+.
+
+AdditiveOperator<out Operator op>
+    (.
+       op = Operator.Add;
+    .)
+=
+    '+'
+    | '-'
+        (.
+            op = Operator.Substract;
+        .)
+.
+
+MultiplicativeExpression<out DSExpression expression>
+=
+    Factor<out expression>
+    {
+        (. 
+            DSExpression rhs;
+            Operator op;
+        .)
+        MultiplicativeOperator<out op>
+        Factor<out rhs>
+        (.
+            expression = new BinaryExpression(expression, rhs, op);
+        .)
+    }
+.
+
+MultiplicativeOperator<out Operator op>
+        (. 
+            op = Operator.Multiply;
+        .)
+=
+    '*'
+    | '/'
+        (.
+            op = Operator.Divide;
+        .)
+.
+
+Factor<out DSExpression exp>
+    (.
+        exp = null;
+    .)
+=
+    number
+        (. 
+            Int64 value;
+            if (Int64.TryParse(t.val, out value))
+            {
+                exp = new ConstantExpression(value);
+            }
+            else
+            {
+                exp = new ConstantExpression(null);
+            }
+        .)
+    | float
+        (.
+            double value;
+            if (Double.TryParse(t.val, out value))
+            {
+                exp = new ConstantExpression(value);
+            }
+            else
+            {
+                exp = new ConstantExpression(null);
+            }
+        .)
+    | literal_true
+        (.
+            exp = new ConstantExpression(true);
+        .)
+    | literal_false
+        (.
+            exp = new ConstantExpression(false);
+        .)
+    | literal_null
+        (.
+            exp = new ConstantExpression(null);
+        .)
+    | textstring
+        (.
+            exp = new ConstantExpression(t.val);
+        .)
+.
+
+END SimpleDSParser.
