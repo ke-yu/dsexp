@@ -34,7 +34,7 @@ namespace dsexp
         static void Main(string[] args)
         {
             // REPL 
-            // (new DSCommandLine()).Run(args);
+            (new DSConsoleHost()).Run(args);
 
             DSCodeContext context = new DSCodeContext();
 

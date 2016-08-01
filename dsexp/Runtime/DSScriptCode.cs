@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Scripting.Runtime;
 using Microsoft.Scripting.Hosting.Shell;
+using Microsoft.Scripting.Hosting.Providers;
 
 namespace dsexp.Runtime
 {
@@ -38,7 +39,7 @@ namespace dsexp.Runtime
         }
     }
 
-    public class DSCommandLine : ConsoleHost
+    public class DSConsoleHost : ConsoleHost
     {
         protected override Type Provider
         {
@@ -46,6 +47,25 @@ namespace dsexp.Runtime
             {
                 return typeof(DSContext);
             }
+        }
+
+        protected override void ExecuteInternal()
+        {
+            var context = HostingHelpers.GetLanguageContext(Engine) as DSContext;
+            base.ExecuteInternal();
+        }
+
+        protected override CommandLine CreateCommandLine()
+        {
+            return new DSCommandLine();
+        }
+    }
+
+    public class DSCommandLine : CommandLine
+    {
+        protected override int Run()
+        {
+            return base.Run();
         }
     }
 }
