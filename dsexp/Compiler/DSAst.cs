@@ -510,16 +510,20 @@ namespace dsexp.Ast
 
     public class ArrayExpression : DSExpression
     {
-        private DSExpression[] items;
+        public DSExpression[] Items
+        {
+            get; private set;
+        }
+        
 
         public ArrayExpression(DSExpression[] items)
         {
-            this.items = items;            
+            this.Items = items;            
         }
 
         public override Expression Reduce()
         {
-            if (items.Count() == 0)
+            if (Items.Count() == 0)
             {
                 var method = typeof(DSOps).GetMethod("CreateEmptyArray");
                 var call = Expression.Call(method, new Expression[] { });
@@ -528,7 +532,7 @@ namespace dsexp.Ast
             else
             {
                 var method = typeof(DSOps).GetMethod("CreateArray");
-                var call = Expression.Call(method, Expression.NewArrayInit(typeof(object), ConvertToObjectArray(items)));
+                var call = Expression.Call(method, Expression.NewArrayInit(typeof(object), ConvertToObjectArray(Items)));
                 return call;
             }
         }
@@ -537,11 +541,11 @@ namespace dsexp.Ast
         {
             if (visitor.Visit(this))
             {
-                if (items != null)
+                if (Items != null)
                 {
-                    for (int i = 0; i < items.Count(); i++)
+                    for (int i = 0; i < Items.Count(); i++)
                     {
-                        items[i].Visit(visitor);
+                        Items[i].Visit(visitor);
                     }
                 }
             } 
@@ -569,7 +573,32 @@ namespace dsexp.Ast
 
         public override void Visit(DSAstVisitor visitor)
         {
-            throw new NotImplementedException();
+            if (visitor.Visit(this))
+            {
+                Start.Visit(visitor);
+                End.Visit(visitor);
+            }
+        }
+    }
+
+    public class ExpressionStatement : Statement
+    {
+        public DSExpression Expression
+        {
+            get; private set;
+        }
+
+        public ExpressionStatement(DSExpression expression)
+        {
+            Expression = expression;
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            if (visitor.Visit(this))
+            {
+                Expression.Visit(visitor);
+            }
         }
     }
 }

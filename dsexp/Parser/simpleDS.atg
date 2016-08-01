@@ -2,7 +2,7 @@ COMPILER SimpleDSParser
 
 CHARACTERS
     identifierStart = '_' + 'a'..'z' + 'A'..'Z'.
-	identifierPart = '_' + 'a'..'z' + 'A'..'Z' + '0'..'9'.
+    identifierPart = '_' + 'a'..'z' + 'A'..'Z' + '0'..'9'.
     digit = '0'..'9'.
     cr  = '\r'. 
     lf  = '\n'.
@@ -20,10 +20,6 @@ TOKENS
     textstring = '"' {anyButDoubleQuote | "\\\""} '"'.
     char = '\'' (anyButQuote | "\\\'" | "\\\"" | "\\\\" | "\\0" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v" | "\\u") '\''.
     period = '.'.
-    postfixed_replicationguide = digit {digit} 'L'.
-
-    list_at = '@'.
-    dominant_list_at = "@@".
 
     openbracket = '['.
     closebracket = ']'.
@@ -58,7 +54,7 @@ TOKENS
     literal_null = "null".
 
 PRAGMAS
-    inlinecomment =  "//" {anyExcludingEndOfLine}.			
+    inlinecomment =  "//" {anyExcludingEndOfLine}.
     blockcomment = "/*" {'/' | other | '*' {'*'} other} '*' {'*'} '/'. 
 
 IGNORE cr + lf + tab
@@ -169,9 +165,13 @@ AssignmentStatement<out Statement assign>
     (.
         assign = new AssignmentStatement(lhs, rhs);
     .)
+    ';'
 .
 
 Expression<out DSExpression expression>
+    (.
+        expression = null;
+    .)
 = 
     ArithmeticExpression<out expression> 
     [
@@ -184,6 +184,7 @@ Expression<out DSExpression expression>
             expression = new RangeExpression(expression, end);
         .)
     ]
+    | ArrayExpression<out expression>
 .
 
 ArithmeticExpression<out DSExpression expression>
@@ -216,14 +217,14 @@ AdditiveOperator<out Operator op>
 
 MultiplicativeExpression<out DSExpression expression>
 =
-    Factor<out expression>
+    PostfixExpression<out expression>
     {
         (. 
             DSExpression rhs;
             Operator op;
         .)
         MultiplicativeOperator<out op>
-        Factor<out rhs>
+        PostfixExpression<out rhs>
         (.
             expression = new BinaryExpression(expression, rhs, op);
         .)
@@ -242,12 +243,102 @@ MultiplicativeOperator<out Operator op>
         .)
 .
 
-Factor<out DSExpression exp>
+PostfixExpression<out DSExpression exp>
     (.
         exp = null;
     .)
 =
-    number
+    PrimaryExpression<out exp>
+    [
+        (.
+            DSExpression exp1;
+        .)
+        '[' Expression<out exp1> ']'
+        {
+            '['
+            (.
+                DSExpression exp2;
+            .)
+            Expression<out exp2>
+            ']'
+        }
+        |
+            (.
+                List<DSExpression> expressions = new List<DSExpression>();
+            .)
+            '(' ArgumentList<out expressions> ')'
+    ]
+.
+
+ArrayExpression<out DSExpression expression>
+=
+    (.
+        List<DSExpression> expressions = new List<DSExpression>();
+    .)
+    '{'
+    [ 
+        (.
+            DSExpression exp;
+        .)
+        Expression<out exp>
+        (.
+            expressions.Add(exp);
+        .)
+        {
+            ','
+            (.
+                DSExpression exp2;
+            .)
+            Expression<out exp2>
+            (.
+                expressions.Add(exp2);
+            .)
+        }
+    ]
+    '}'
+    (.
+        expression = new ArrayExpression(expressions.ToArray());
+    .)
+.
+
+ArgumentList<.out List<DSExpression> expressions.>
+=
+    (.
+        expressions = new List<DSExpression>();
+    .)
+    {
+        (.
+            DSExpression arg;
+        .)
+        Expression<out arg>
+        (.
+            expressions.Add(arg);
+        .)
+        {
+            ','
+            (.
+                DSExpression arg2;
+            .)
+            Expression<out arg2>
+            (.
+                expressions.Add(arg2);
+            .)
+        }
+    }
+.
+    
+
+PrimaryExpression<out DSExpression exp>
+    (.
+        exp = null;
+    .)
+=
+    '(' Expression<out exp> ')'
+    | identifier
+        (.
+            exp = new NameExpression(t.val);
+        .)
+    | number
         (. 
             Int64 value;
             if (Int64.TryParse(t.val, out value))

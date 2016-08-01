@@ -37,5 +37,15 @@ namespace dsexp.Ast
         {
             return true;
         }
+
+        public virtual bool Visit(RangeExpression node)
+        {
+            return true;
+        } 
+
+        public virtual bool Visit(ExpressionStatement node)
+        {
+            return true;
+        }
     }
 }

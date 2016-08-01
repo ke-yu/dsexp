@@ -81,5 +81,27 @@ namespace dsexp.Ast
             node.Right.Visit(this);
             return true;
         }
+
+        public override bool Visit(ArrayExpression node)
+        {
+            foreach (var element in node.Items)
+            {
+                element.Visit(this);
+            }
+            return true;
+        }
+
+        public override bool Visit(ExpressionStatement node)
+        {
+            node.Expression.Visit(this);
+            return true;
+        }
+
+        public override bool Visit(RangeExpression node)
+        {
+            node.Start.Visit(this);
+            node.End.Visit(this);
+            return true;
+        }
     }
 }
