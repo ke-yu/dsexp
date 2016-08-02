@@ -26,7 +26,14 @@ namespace dsexp.Runtime
 
         public static void Print(DSCodeContext context, object value)
         {
-            Console.WriteLine(value);
+            if (value.GetType() == typeof(DSType))
+            {
+                Console.WriteLine(value.ToString());
+            }
+            else
+            {
+                Console.WriteLine(value);
+            }
         }
 
         public static DSArray CreateArray(object[] data)
@@ -45,6 +52,14 @@ namespace dsexp.Runtime
         public static string Add(string lhs, string rhs)
         {
             return lhs + rhs;
+        }
+    }
+
+    public class IntOps
+    {
+        public static Int64 Multiply(Int64 lhs, Int64 rhs)
+        {
+            return lhs * rhs;
         }
     }
 }

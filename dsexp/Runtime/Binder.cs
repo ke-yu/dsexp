@@ -56,9 +56,10 @@ namespace dsexp.Runtime
 
         }
 
+        // It is called when base.BindDelegate<T>() is called
         public override DynamicMetaObject FallbackBinaryOperation(DynamicMetaObject target, DynamicMetaObject arg, DynamicMetaObject errorSuggestion)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException(); 
         }
 
         public override T BindDelegate<T>(CallSite<T> site, object[] args)
@@ -69,6 +70,8 @@ namespace dsexp.Runtime
                 {
                     case ExpressionType.Add:
                         return BindAdd<T>(site, args);
+                    case ExpressionType.Multiply:
+                        return BindMultiply<T>(site, args);
                 }
             }
 
@@ -88,12 +91,36 @@ namespace dsexp.Runtime
             return base.BindDelegate(site, args);
         }
 
+        private T BindMultiply<T>(CallSite<T> site, object[] args) where T: class
+        {
+            Type t1 = args[0].GetType();
+            Type t2 = args[1].GetType();
+
+            if (t1 == typeof(Int64) || t2 == typeof(Int64))
+            {
+                return (T)(object)new Func<CallSite, object, object, object>(IntMultiply);
+            }
+
+            return base.BindDelegate(site, args);
+        }
+
         private object StringAdd(CallSite site, object lhs, object rhs)
         {
             if (lhs != null && lhs.GetType() == typeof(string) &&
                 rhs != null && rhs.GetType() == typeof(string))
             {
                 return StringOps.Add((string)lhs, (string)rhs);
+            }
+
+            return ((CallSite<Func<CallSite, object, object, object>>)site).Update(site, lhs, rhs);
+        }
+
+        private object IntMultiply(CallSite site, object lhs, object rhs)
+        {
+            if (lhs != null && lhs.GetType() == typeof(Int64) &&
+                rhs != null && rhs.GetType() == typeof(Int64))
+            {
+                return IntOps.Multiply((Int64)lhs, (Int64)rhs);
             }
 
             return ((CallSite<Func<CallSite, object, object, object>>)site).Update(site, lhs, rhs);
