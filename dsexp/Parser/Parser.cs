@@ -64,6 +64,29 @@ public class Parser {
         get; set;
     }
 
+private bool IsAssignment()
+    {
+        Token pt = la;
+        while (pt.kind != _EOF)
+        {
+            if (pt.val == ";")
+            {
+                scanner.ResetPeek();
+                return false;
+            }
+            else if (pt.val == "=")
+            {
+                scanner.ResetPeek();
+                return true;
+            }
+
+            pt = scanner.Peek();
+        }
+
+        scanner.ResetPeek();
+        return false;
+    }
+
 
     public static Statement Parse(string code)
     {
@@ -153,7 +176,7 @@ public class Parser {
 	void EntryPoint(out Statement statement) {
 		statement = null;
 		
-		if (la.kind == 1) {
+		if (StartOf(1)) {
 			Statement(out statement);
 		} else if (la.kind == 22) {
 			FunctionDefinition();
@@ -161,7 +184,18 @@ public class Parser {
 	}
 
 	void Statement(out Statement statement) {
-		AssignmentStatement(out statement);
+		statement = null;
+		
+		if (IsAssignment()) {
+			AssignmentStatement(out statement);
+		} else if (StartOf(1)) {
+			DSExpression exp;
+			
+			Expression(out exp);
+			statement = new ExpressionStatement(exp);
+			
+			Expect(20);
+		} else SynErr(44);
 	}
 
 	void FunctionDefinition() {
@@ -186,7 +220,7 @@ public class Parser {
 		statements = new List<Statement>();
 		
 		Expect(36);
-		while (la.kind == 1) {
+		while (StartOf(1)) {
 			Statement statement;
 			
 			Statement(out statement);
@@ -232,7 +266,7 @@ public class Parser {
 	void Expression(out DSExpression expression) {
 		expression = null;
 		
-		if (StartOf(1)) {
+		if (StartOf(2)) {
 			ArithmeticExpression(out expression);
 			if (la.kind == 21) {
 				Get();
@@ -244,7 +278,7 @@ public class Parser {
 			}
 		} else if (la.kind == 36) {
 			ArrayExpression(out expression);
-		} else SynErr(44);
+		} else SynErr(45);
 	}
 
 	void ArithmeticExpression(out DSExpression expression) {
@@ -264,7 +298,7 @@ public class Parser {
 		List<DSExpression> expressions = new List<DSExpression>();
 		
 		Expect(36);
-		if (StartOf(2)) {
+		if (StartOf(1)) {
 			DSExpression exp;
 			
 			Expression(out exp);
@@ -306,7 +340,7 @@ public class Parser {
 			Get();
 			op = Operator.Substract;
 			
-		} else SynErr(45);
+		} else SynErr(46);
 	}
 
 	void PostfixExpression(out DSExpression exp) {
@@ -346,7 +380,7 @@ public class Parser {
 			Get();
 			op = Operator.Divide;
 			
-		} else SynErr(46);
+		} else SynErr(47);
 	}
 
 	void PrimaryExpression(out DSExpression exp) {
@@ -417,14 +451,14 @@ public class Parser {
 			
 			break;
 		}
-		default: SynErr(47); break;
+		default: SynErr(48); break;
 		}
 	}
 
 	void ArgumentList(out List<DSExpression> expressions) {
 		expressions = new List<DSExpression>();
 		
-		while (StartOf(2)) {
+		while (StartOf(1)) {
 			DSExpression arg;
 			
 			Expression(out arg);
@@ -453,8 +487,8 @@ public class Parser {
     
     static readonly bool[,] set = {
 		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
-		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x},
-		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,x, T,x,x,x, x,x,x,x}
+		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,x, T,x,x,x, x,x,x,x},
+		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x}
 
     };
 } // end Parser
@@ -512,10 +546,11 @@ public class Errors {
 			case 41: s = "\"/\" expected"; break;
 			case 42: s = "??? expected"; break;
 			case 43: s = "invalid EntryPoint"; break;
-			case 44: s = "invalid Expression"; break;
-			case 45: s = "invalid AdditiveOperator"; break;
-			case 46: s = "invalid MultiplicativeOperator"; break;
-			case 47: s = "invalid PrimaryExpression"; break;
+			case 44: s = "invalid Statement"; break;
+			case 45: s = "invalid Expression"; break;
+			case 46: s = "invalid AdditiveOperator"; break;
+			case 47: s = "invalid MultiplicativeOperator"; break;
+			case 48: s = "invalid PrimaryExpression"; break;
 
             default: s = "error " + n; break;
         }

@@ -24,6 +24,11 @@ namespace dsexp.Runtime
             context.SetVariable(name, value);
         }
 
+        public static void Print(DSCodeContext context, object value)
+        {
+            Console.WriteLine(value);
+        }
+
         public static DSArray CreateArray(object[] data)
         {
             return new DSArray(data);

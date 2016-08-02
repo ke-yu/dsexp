@@ -127,12 +127,21 @@ namespace dsexp.Ast
     {
         private Dictionary<string, DSVariable> variables = new Dictionary<string, DSVariable>();
         private Dictionary<string, DSVariableReference> references = new Dictionary<string, DSVariableReference>();
+        private static ParameterExpression localCodeContextVariable = Expression.Parameter(typeof(DSCodeContext), "$localContext");
 
         public Dictionary<string, DSVariable> Variables
         {
             get
             {
                 return variables;
+            }
+        }
+
+        public virtual ParameterExpression LocalContext
+        {
+            get
+            {
+                return localCodeContextVariable;
             }
         }
 
@@ -192,8 +201,9 @@ namespace dsexp.Ast
     {
         private Dictionary<DSVariable, Expression> globals = new Dictionary<DSVariable, Expression>(); 
         private Statement body;
-        internal static ParameterExpression functionCode = Expression.Variable(typeof(FunctionCode), "$functionCode");
-        internal static ParameterExpression globalContext = Expression.Parameter(typeof(DSCodeContext), "$globalContext");
+
+        private static ParameterExpression functionCode = Expression.Variable(typeof(FunctionCode), "$functionCode");
+        private static ParameterExpression globalContext = Expression.Parameter(typeof(DSCodeContext), "$globalContext");
 
         public DSAst(Statement body)
         {
@@ -206,6 +216,14 @@ namespace dsexp.Ast
         }
 
         public ParameterExpression GlobalContext
+        {
+            get
+            {
+                return globalContext;
+            }
+        }
+
+        public override ParameterExpression LocalContext
         {
             get
             {
@@ -599,6 +617,12 @@ namespace dsexp.Ast
             {
                 Expression.Visit(visitor);
             }
+        }
+
+        public override Expression Reduce()
+        {
+            var method = typeof(DSOps).GetMethod("Print");
+            return Call(method, Parent.LocalContext, Expression);
         }
     }
 }

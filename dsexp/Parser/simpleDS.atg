@@ -1,4 +1,26 @@
 COMPILER SimpleDSParser
+    private bool IsAssignment()
+    {
+        Token pt = la;
+        while (pt.kind != _EOF)
+        {
+            if (pt.val == ";")
+            {
+                scanner.ResetPeek();
+                return false;
+            }
+            else if (pt.val == "=")
+            {
+                scanner.ResetPeek();
+                return true;
+            }
+
+            pt = scanner.Peek();
+        }
+
+        scanner.ResetPeek();
+        return false;
+    }
 
 CHARACTERS
     identifierStart = '_' + 'a'..'z' + 'A'..'Z'.
@@ -147,8 +169,22 @@ BlockStatement<.out List<Statement> statements.>
 .
 
 Statement<out Statement statement>
+    (.
+        statement = null;
+    .)
 = 
-    AssignmentStatement<out statement>
+    (IF(IsAssignment())
+        AssignmentStatement<out statement>
+    )
+    | 
+        (.
+            DSExpression exp;
+        .)
+        Expression<out exp>
+        (.
+            statement = new ExpressionStatement(exp);
+        .)
+        ';'
 .
 
 AssignmentStatement<out Statement assign> 
@@ -157,6 +193,7 @@ AssignmentStatement<out Statement assign>
     (.
         NameExpression lhs = new NameExpression(t.val);
     .)
+    
     '='
     (.
         DSExpression rhs;

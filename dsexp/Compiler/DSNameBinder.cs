@@ -71,12 +71,14 @@ namespace dsexp.Ast
 
         public override bool Visit(AssignmentStatement node)
         {
+            node.Parent = currentScope;
             node.Left.Visit(defineBinder);
             return true;
         }
 
         public override bool Visit(BinaryExpression node)
         {
+            node.Parent = currentScope;
             node.Left.Visit(this);
             node.Right.Visit(this);
             return true;
@@ -84,6 +86,7 @@ namespace dsexp.Ast
 
         public override bool Visit(ArrayExpression node)
         {
+            node.Parent = currentScope;
             foreach (var element in node.Items)
             {
                 element.Visit(this);
@@ -93,12 +96,14 @@ namespace dsexp.Ast
 
         public override bool Visit(ExpressionStatement node)
         {
+            node.Parent = currentScope;
             node.Expression.Visit(this);
             return true;
         }
 
         public override bool Visit(RangeExpression node)
         {
+            node.Parent = currentScope;
             node.Start.Visit(this);
             node.End.Visit(this);
             return true;
