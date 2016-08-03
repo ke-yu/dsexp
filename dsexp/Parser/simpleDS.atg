@@ -100,10 +100,10 @@ EntryPoint<out Statement statement>
     .)
 = 
     Statement<out statement> |
-    FunctionDefinition
+    FunctionDefinition<out statement>
 .
 
-FunctionDefinition
+FunctionDefinition<out Statement statement>
 =
     "def"
     (.
@@ -115,6 +115,10 @@ FunctionDefinition
         List<Statement> statements;
     .)
     BlockStatement<out statements>
+    (.
+        BlockStatement blockStatement = new BlockStatement(statements); 
+        statement = new FunctionDefinition(functionName, parameters, blockStatement);
+    .)
 .
 
 MethodSignature<.out string functionName, out List<string> parameters.>

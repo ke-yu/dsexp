@@ -179,7 +179,7 @@ private bool IsAssignment()
 		if (StartOf(1)) {
 			Statement(out statement);
 		} else if (la.kind == 22) {
-			FunctionDefinition();
+			FunctionDefinition(out statement);
 		} else SynErr(43);
 	}
 
@@ -198,7 +198,7 @@ private bool IsAssignment()
 		} else SynErr(44);
 	}
 
-	void FunctionDefinition() {
+	void FunctionDefinition(out Statement statement) {
 		Expect(22);
 		string functionName;
 		List<string> parameters;
@@ -207,6 +207,9 @@ private bool IsAssignment()
 		List<Statement> statements;
 		
 		BlockStatement(out statements);
+		BlockStatement blockStatement = new BlockStatement(statements); 
+		statement = new FunctionDefinition(functionName, parameters, blockStatement);
+		
 	}
 
 	void MethodSignature(out string functionName, out List<string> parameters) {

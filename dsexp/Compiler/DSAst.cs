@@ -625,4 +625,62 @@ namespace dsexp.Ast
             return Call(method, Parent.LocalContext, Expression);
         }
     }
+
+    public class BlockStatement : Statement
+    {
+        public Statement[] Statements
+        {
+            get; private set;
+        }
+
+        public BlockStatement(Statement[] statements)
+        {
+            Statements = statements;
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class FunctionDefintion : ScopeStatement
+    {
+        public string Name
+        {
+            get; private set;
+        }
+
+        public IEnumerable<string> Parameters
+        {
+            get; private set;
+        }
+
+        public BlockStatement Body
+        {
+            get; private set;
+        }
+
+        public FunctionDefintion(string functionName, string[] parameters, BlockStatement blockStatement)
+        {
+            Name = functionName;
+            Parameters = parameters;
+            Body = blockStatement;
+        }
+
+        public override Expression Reduce()
+        {
+            return base.Reduce();
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override DSVariable BindVariableReference(DSNameBinder binder, DSVariableReference reference)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

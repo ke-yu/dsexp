@@ -47,5 +47,15 @@ namespace dsexp.Ast
         {
             return true;
         }
+
+        public virtual bool Visit(BlockStatement node)
+        {
+            return true;
+        }
+
+        public virtual bool Visit(FunctionDefintion node)
+        {
+            return true;
+        }
     }
 }

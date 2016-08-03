@@ -108,5 +108,27 @@ namespace dsexp.Ast
             node.End.Visit(this);
             return true;
         }
+
+        public override bool Visit(BlockStatement node)
+        {
+            node.Parent = currentScope;
+            foreach (var statement in node.Statements)
+            {
+                statement.Visit(this);
+            }
+
+            return true;
+        }
+
+        public override bool Visit(FunctionDefintion node)
+        {
+            node.Parent = currentScope;
+            foreach (var statement in node.Statements)
+            {
+                statement.Visit(this);
+            }
+
+            return true;
+        }
     }
 }
