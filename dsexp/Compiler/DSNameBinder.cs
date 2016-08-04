@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace dsexp.Ast
 {
-    class DSDefineBinder : DSAstVisitor
+    public enum VariableKind
+    {
+        Global,
+        Local,
+        Parameter
+    }
+
+    public class DSDefineBinder : DSAstVisitor
     {
         private DSNameBinder nameBinder;
 
@@ -22,7 +29,7 @@ namespace dsexp.Ast
         }
     }
 
-    class DSParameterBinder : DSAstVisitor
+    public class DSParameterBinder : DSAstVisitor
     {
         private DSNameBinder nameBinder;
 
@@ -34,7 +41,7 @@ namespace dsexp.Ast
         public override bool Visit(Parameter node)
         {
             node.Parent = nameBinder.CurrentScope;
-            node.ParameterVariable = nameBinder.DefineName(node.Name);
+            node.ParameterVariable = nameBinder.DefineParameter(node.Name);
             return false;
         }
     }
@@ -43,6 +50,7 @@ namespace dsexp.Ast
     {
         private DSDefineBinder defineBinder;
         private DSParameterBinder parameterBinder;
+        private List<ScopeStatement> scopes = new List<ScopeStatement>();
 
         public ScopeStatement CurrentScope
         {
@@ -63,13 +71,13 @@ namespace dsexp.Ast
 
         public DSVariable DefineName(string name)
         {
-            var variable = CurrentScope.CreateVariable(name);
+            var variable = CurrentScope.CreateVariable(name, VariableKind.Local);
             return variable;
         }
 
         public DSVariable DefineParameter(string name)
         {
-            var variable = CurrentScope.CreateVariable(name);
+            var variable = CurrentScope.CreateVariable(name, VariableKind.Parameter);
             return variable;
         }
 
@@ -78,12 +86,23 @@ namespace dsexp.Ast
             CurrentScope = ast;
             ast.Visit(this);
             ast.Bind(this);
+
+            for (int i = scopes.Count - 1; i >= 0; i--)
+            {
+                scopes[i].PostBind(this);
+            }
+
             ast.PostBind(this);
         }
 
         public override bool Visit(DSAst ast)
         {
             return true;
+        }
+
+        public override void PostVisit(DSAst ast)
+        {
+            CurrentScope = CurrentScope.Parent;
         }
 
         public override bool Visit(NameExpression node)
@@ -141,7 +160,18 @@ namespace dsexp.Ast
             node.Parent = CurrentScope;
             node.FunctionVariable = DefineName(node.Name);
             CurrentScope = node;
+
+            foreach (var parameter in node.Parameters)
+            {
+                parameter.Visit(parameterBinder);
+            }
             return true;
+        }
+
+        public override void PostVisit(FunctionDefinition node)
+        {
+            scopes.Add(CurrentScope);
+            CurrentScope = CurrentScope.Parent;
         }
 
         public override bool Visit(Parameter node)

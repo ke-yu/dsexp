@@ -20,9 +20,15 @@ namespace dsexp.Ast
             get; private set;
         }
 
-        public DSVariable(string name)
+        public VariableKind Kind
+        {
+            get; private set;
+        }
+        
+        public DSVariable(string name, VariableKind kind)
         {
             Name = name;
+            Kind = kind;
         }
     }
 
@@ -159,12 +165,12 @@ namespace dsexp.Ast
             }
         }
 
-        public DSVariable CreateVariable(string name)
+        public DSVariable CreateVariable(string name, VariableKind kind)
         {
             DSVariable variable;
             if (!variables.TryGetValue(name, out variable))
             {
-                variable = new DSVariable(name);
+                variable = new DSVariable(name, kind);
                 variables[name] = variable; 
             }
 
@@ -197,7 +203,13 @@ namespace dsexp.Ast
 
         public virtual void PostBind(DSNameBinder binder)
         {
-
+            foreach (var variable in Variables.Values)
+            {
+                if (variable.Kind == VariableKind.Local)
+                {
+                    variableMapping[variable] = Expression.Parameter(typeof(object), variable.Name);
+                }
+            }
         }
 
         protected abstract DSVariable BindVariableReference(DSNameBinder binder, DSVariableReference reference);
@@ -255,11 +267,12 @@ namespace dsexp.Ast
             {
                 body.Visit(visitor);
             }
+            visitor.PostVisit(this);
         }
 
         protected override DSVariable BindVariableReference(DSNameBinder binder, DSVariableReference reference)
         {
-            return CreateVariable(reference.Name); 
+            return CreateVariable(reference.Name, VariableKind.Global); 
         }
 
         public Expression LookupExpression(DSVariable variable)
@@ -687,12 +700,14 @@ namespace dsexp.Ast
 
     public class FunctionDefinition : ScopeStatement
     {
+        public static readonly LabelTarget ReturnLabel = Expression.Label(typeof(object), "$return");
+
         public string Name
         {
             get; private set;
         }
 
-        public IEnumerable<Parameter> Parameters
+        public List<Parameter> Parameters
         {
             get; private set;
         }
@@ -710,7 +725,7 @@ namespace dsexp.Ast
         public FunctionDefinition(string functionName, List<string> parameters, BlockStatement blockStatement)
         {
             Name = functionName;
-            Parameters = parameters.Select(p => new Parameter(p));
+            Parameters = parameters.Select(p => new Parameter(p)).ToList();
             Body = blockStatement;
         }
 
@@ -730,6 +745,8 @@ namespace dsexp.Ast
 
                 Body.Visit(visitor);
             }
+
+            visitor.PostVisit(this);
         }
 
         public override void PostBind(DSNameBinder binder)
@@ -745,6 +762,40 @@ namespace dsexp.Ast
         protected override DSVariable BindVariableReference(DSNameBinder binder, DSVariableReference reference)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class ReturnStatement : Statement
+    {
+        public DSExpression ReturnExpression
+        {
+            get; private set;
+        }
+
+        public ReturnStatement(DSExpression returnExpression)
+        {
+            ReturnExpression = returnExpression;
+        }
+
+        public override Expression Reduce()
+        {
+            var type = typeof(object);
+            var exp = ReturnExpression == null ? Utils.Constant(null, type) : Utils.Convert(ReturnExpression, type);
+            var ret = Expression.Return(FunctionDefinition.ReturnLabel, exp);
+            return ret;
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            if (visitor.Visit(this))
+            {
+                if (ReturnExpression != null)
+                {
+                    ReturnExpression.Visit(visitor);
+                }
+            }
+
+            visitor.PostVisit(this);
         }
     }
 }

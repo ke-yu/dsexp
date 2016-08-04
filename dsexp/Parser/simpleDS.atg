@@ -70,6 +70,7 @@ TOKENS
     kw_from = "from".
     kw_break = "break".
     kw_continue = "continue".
+    kw_return = "return".
 
     literal_true = "true".
     literal_false = "false".
@@ -117,7 +118,7 @@ FunctionDefinition<out Statement statement>
     BlockStatement<out statements>
     (.
         BlockStatement blockStatement = new BlockStatement(statements.ToArray()); 
-        statement = new FunctionDefinition(functionName, parameters, blockStatement);
+        statement = new FunctionDef inition(functionName, parameters, blockStatement);
     .)
 .
 
@@ -182,13 +183,23 @@ Statement<out Statement statement>
     (IF(IsAssignment())
         AssignmentStatement<out statement>
     )
-    | 
+    |
         (.
             DSExpression exp;
         .)
         Expression<out exp>
         (.
             statement = new ExpressionStatement(exp);
+        .)
+        ';'
+    |
+        kw_return
+        (.
+            DSExpression exp;
+        .)
+        Expression<out exp>
+        (.
+            statement = new ReturnStatement(exp);
         .)
         ';'
 .

@@ -41,12 +41,13 @@ public class Parser {
 	public const int _kw_from = 29;
 	public const int _kw_break = 30;
 	public const int _kw_continue = 31;
-	public const int _literal_true = 32;
-	public const int _literal_false = 33;
-	public const int _literal_null = 34;
-	public const int maxT = 42;
-	public const int _inlinecomment = 43;
-	public const int _blockcomment = 44;
+	public const int _kw_return = 32;
+	public const int _literal_true = 33;
+	public const int _literal_false = 34;
+	public const int _literal_null = 35;
+	public const int maxT = 43;
+	public const int _inlinecomment = 44;
+	public const int _blockcomment = 45;
 
     const bool T = true;
     const bool x = false;
@@ -126,9 +127,9 @@ private bool IsAssignment()
             t = la;
             la = scanner.Scan();
             if (la.kind <= maxT) { ++errDist; break; }
-				if (la.kind == 43) {
-				}
 				if (la.kind == 44) {
+				}
+				if (la.kind == 45) {
 				}
 
             la = t;
@@ -180,7 +181,7 @@ private bool IsAssignment()
 			Statement(out statement);
 		} else if (la.kind == 22) {
 			FunctionDefinition(out statement);
-		} else SynErr(43);
+		} else SynErr(44);
 	}
 
 	void Statement(out Statement statement) {
@@ -188,14 +189,22 @@ private bool IsAssignment()
 		
 		if (IsAssignment()) {
 			AssignmentStatement(out statement);
-		} else if (StartOf(1)) {
+		} else if (StartOf(2)) {
 			DSExpression exp;
 			
 			Expression(out exp);
 			statement = new ExpressionStatement(exp);
 			
 			Expect(20);
-		} else SynErr(44);
+		} else if (la.kind == 32) {
+			Get();
+			DSExpression exp;
+			
+			Expression(out exp);
+			statement = new ReturnStatement(exp);
+			
+			Expect(20);
+		} else SynErr(45);
 	}
 
 	void FunctionDefinition(out Statement statement) {
@@ -222,7 +231,7 @@ private bool IsAssignment()
 	void BlockStatement(out List<Statement> statements) {
 		statements = new List<Statement>();
 		
-		Expect(36);
+		Expect(37);
 		while (StartOf(1)) {
 			Statement statement;
 			
@@ -234,7 +243,7 @@ private bool IsAssignment()
 			}
 			
 		}
-		Expect(37);
+		Expect(38);
 	}
 
 	void Parameters(out List<string> parameters) {
@@ -245,7 +254,7 @@ private bool IsAssignment()
 			Get();
 			parameters.Add(t.val);
 			
-			while (la.kind == 35) {
+			while (la.kind == 36) {
 				Get();
 				Expect(1);
 				parameters.Add(t.val);
@@ -259,7 +268,7 @@ private bool IsAssignment()
 		Expect(1);
 		NameExpression lhs = new NameExpression(t.val);
 		
-		Expect(38);
+		Expect(39);
 		DSExpression rhs;
 		
 		Expression(out rhs);
@@ -271,7 +280,7 @@ private bool IsAssignment()
 	void Expression(out DSExpression expression) {
 		expression = null;
 		
-		if (StartOf(2)) {
+		if (StartOf(3)) {
 			ArithmeticExpression(out expression);
 			if (la.kind == 21) {
 				Get();
@@ -281,14 +290,14 @@ private bool IsAssignment()
 				expression = new RangeExpression(expression, end);
 				
 			}
-		} else if (la.kind == 36) {
+		} else if (la.kind == 37) {
 			ArrayExpression(out expression);
-		} else SynErr(45);
+		} else SynErr(46);
 	}
 
 	void ArithmeticExpression(out DSExpression expression) {
 		MultiplicativeExpression(out expression);
-		while (la.kind == 12 || la.kind == 39) {
+		while (la.kind == 12 || la.kind == 40) {
 			DSExpression rhs;
 			Operator op;
 			
@@ -302,14 +311,14 @@ private bool IsAssignment()
 	void ArrayExpression(out DSExpression expression) {
 		List<DSExpression> expressions = new List<DSExpression>();
 		
-		Expect(36);
-		if (StartOf(1)) {
+		Expect(37);
+		if (StartOf(2)) {
 			DSExpression exp;
 			
 			Expression(out exp);
 			expressions.Add(exp);
 			
-			while (la.kind == 35) {
+			while (la.kind == 36) {
 				Get();
 				DSExpression exp2;
 				
@@ -318,14 +327,14 @@ private bool IsAssignment()
 				
 			}
 		}
-		Expect(37);
+		Expect(38);
 		expression = new ArrayExpression(expressions.ToArray());
 		
 	}
 
 	void MultiplicativeExpression(out DSExpression expression) {
 		PostfixExpression(out expression);
-		while (la.kind == 40 || la.kind == 41) {
+		while (la.kind == 41 || la.kind == 42) {
 			DSExpression rhs;
 			Operator op;
 			
@@ -339,13 +348,13 @@ private bool IsAssignment()
 	void AdditiveOperator(out Operator op) {
 		op = Operator.Add;
 		
-		if (la.kind == 39) {
+		if (la.kind == 40) {
 			Get();
 		} else if (la.kind == 12) {
 			Get();
 			op = Operator.Substract;
 			
-		} else SynErr(46);
+		} else SynErr(47);
 	}
 
 	void PostfixExpression(out DSExpression exp) {
@@ -379,13 +388,13 @@ private bool IsAssignment()
 	void MultiplicativeOperator(out Operator op) {
 		op = Operator.Multiply;
 		
-		if (la.kind == 40) {
+		if (la.kind == 41) {
 			Get();
-		} else if (la.kind == 41) {
+		} else if (la.kind == 42) {
 			Get();
 			op = Operator.Divide;
 			
-		} else SynErr(47);
+		} else SynErr(48);
 	}
 
 	void PrimaryExpression(out DSExpression exp) {
@@ -432,19 +441,19 @@ private bool IsAssignment()
 			
 			break;
 		}
-		case 32: {
+		case 33: {
 			Get();
 			exp = new ConstantExpression(true);
 			
 			break;
 		}
-		case 33: {
+		case 34: {
 			Get();
 			exp = new ConstantExpression(false);
 			
 			break;
 		}
-		case 34: {
+		case 35: {
 			Get();
 			exp = new ConstantExpression(null);
 			
@@ -456,20 +465,20 @@ private bool IsAssignment()
 			
 			break;
 		}
-		default: SynErr(48); break;
+		default: SynErr(49); break;
 		}
 	}
 
 	void ArgumentList(out List<DSExpression> expressions) {
 		expressions = new List<DSExpression>();
 		
-		while (StartOf(1)) {
+		while (StartOf(2)) {
 			DSExpression arg;
 			
 			Expression(out arg);
 			expressions.Add(arg);
 			
-			while (la.kind == 35) {
+			while (la.kind == 36) {
 				Get();
 				DSExpression arg2;
 				
@@ -491,9 +500,10 @@ private bool IsAssignment()
     }
     
     static readonly bool[,] set = {
-		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
-		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,x, T,x,x,x, x,x,x,x},
-		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x}
+		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, x,T,x,x, x,x,x,x, x},
+		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, x,T,x,x, x,x,x,x, x},
+		{x,T,T,T, T,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x}
 
     };
 } // end Parser
@@ -539,23 +549,24 @@ public class Errors {
 			case 29: s = "kw_from expected"; break;
 			case 30: s = "kw_break expected"; break;
 			case 31: s = "kw_continue expected"; break;
-			case 32: s = "literal_true expected"; break;
-			case 33: s = "literal_false expected"; break;
-			case 34: s = "literal_null expected"; break;
-			case 35: s = "\",\" expected"; break;
-			case 36: s = "\"{\" expected"; break;
-			case 37: s = "\"}\" expected"; break;
-			case 38: s = "\"=\" expected"; break;
-			case 39: s = "\"+\" expected"; break;
-			case 40: s = "\"*\" expected"; break;
-			case 41: s = "\"/\" expected"; break;
-			case 42: s = "??? expected"; break;
-			case 43: s = "invalid EntryPoint"; break;
-			case 44: s = "invalid Statement"; break;
-			case 45: s = "invalid Expression"; break;
-			case 46: s = "invalid AdditiveOperator"; break;
-			case 47: s = "invalid MultiplicativeOperator"; break;
-			case 48: s = "invalid PrimaryExpression"; break;
+			case 32: s = "kw_return expected"; break;
+			case 33: s = "literal_true expected"; break;
+			case 34: s = "literal_false expected"; break;
+			case 35: s = "literal_null expected"; break;
+			case 36: s = "\",\" expected"; break;
+			case 37: s = "\"{\" expected"; break;
+			case 38: s = "\"}\" expected"; break;
+			case 39: s = "\"=\" expected"; break;
+			case 40: s = "\"+\" expected"; break;
+			case 41: s = "\"*\" expected"; break;
+			case 42: s = "\"/\" expected"; break;
+			case 43: s = "??? expected"; break;
+			case 44: s = "invalid EntryPoint"; break;
+			case 45: s = "invalid Statement"; break;
+			case 46: s = "invalid Expression"; break;
+			case 47: s = "invalid AdditiveOperator"; break;
+			case 48: s = "invalid MultiplicativeOperator"; break;
+			case 49: s = "invalid PrimaryExpression"; break;
 
             default: s = "error " + n; break;
         }

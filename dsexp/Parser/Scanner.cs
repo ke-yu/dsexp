@@ -203,8 +203,8 @@ public class UTF8Buffer: Buffer {
 public class Scanner {
     const char EOL = '\n';
     const int eofSym = 0; /* pdt */
-	const int maxT = 42;
-	const int noSym = 42;
+	const int maxT = 43;
+	const int noSym = 43;
 
 
     public Buffer buffer; // scanner buffer
@@ -326,9 +326,10 @@ public class Scanner {
 			case "from": t.kind = 29; break;
 			case "break": t.kind = 30; break;
 			case "continue": t.kind = 31; break;
-			case "true": t.kind = 32; break;
-			case "false": t.kind = 33; break;
-			case "null": t.kind = 34; break;
+			case "return": t.kind = 32; break;
+			case "true": t.kind = 33; break;
+			case "false": t.kind = 34; break;
+			case "null": t.kind = 35; break;
 			default: break;
 		}
     }
@@ -420,15 +421,15 @@ public class Scanner {
 			case 23:
 				{t.kind = 21; break;}
 			case 24:
-				recEnd = pos; recKind = 43;
+				recEnd = pos; recKind = 44;
 				if (ch <= 9 || ch >= 11 && ch <= 65535) {AddCh(); goto case 24;}
-				else {t.kind = 43; break;}
+				else {t.kind = 44; break;}
 			case 25:
 				if (ch <= ')' || ch >= '+' && ch <= 65535) {AddCh(); goto case 25;}
 				else if (ch == '*') {AddCh(); goto case 34;}
 				else {goto case 0;}
 			case 26:
-				{t.kind = 44; break;}
+				{t.kind = 45; break;}
 			case 27:
 				recEnd = pos; recKind = 2;
 				if (ch >= '0' && ch <= '9') {AddCh(); goto case 27;}
@@ -475,24 +476,24 @@ public class Scanner {
 				if (ch == 39) {AddCh(); goto case 11;}
 				else {t.kind = 5; break;}
 			case 37:
-				{t.kind = 35; break;}
-			case 38:
 				{t.kind = 36; break;}
-			case 39:
+			case 38:
 				{t.kind = 37; break;}
+			case 39:
+				{t.kind = 38; break;}
 			case 40:
-				{t.kind = 39; break;}
-			case 41:
 				{t.kind = 40; break;}
+			case 41:
+				{t.kind = 41; break;}
 			case 42:
-				recEnd = pos; recKind = 38;
+				recEnd = pos; recKind = 39;
 				if (ch == '=') {AddCh(); goto case 20;}
-				else {t.kind = 38; break;}
+				else {t.kind = 39; break;}
 			case 43:
-				recEnd = pos; recKind = 41;
+				recEnd = pos; recKind = 42;
 				if (ch == '/') {AddCh(); goto case 24;}
 				else if (ch == '*') {AddCh(); goto case 25;}
-				else {t.kind = 41; break;}
+				else {t.kind = 42; break;}
 
         }
         t.val = new String(tval, 0, tlen);
