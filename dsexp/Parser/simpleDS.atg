@@ -116,7 +116,7 @@ FunctionDefinition<out Statement statement>
     .)
     BlockStatement<out statements>
     (.
-        BlockStatement blockStatement = new BlockStatement(statements); 
+        BlockStatement blockStatement = new BlockStatement(statements.ToArray()); 
         statement = new FunctionDefinition(functionName, parameters, blockStatement);
     .)
 .
@@ -149,6 +149,7 @@ Parameters<.out List<string> parameters.>
             .)
         }
     ]
+    ')'
 .
 
 BlockStatement<.out List<Statement> statements.>
@@ -162,6 +163,7 @@ BlockStatement<.out List<Statement> statements.>
             Statement statement;
         .)
         Statement<out statement>
+        ';'
         (.
             if (statement != null)
             {

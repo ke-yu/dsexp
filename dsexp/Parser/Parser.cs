@@ -207,7 +207,7 @@ private bool IsAssignment()
 		List<Statement> statements;
 		
 		BlockStatement(out statements);
-		BlockStatement blockStatement = new BlockStatement(statements); 
+		BlockStatement blockStatement = new BlockStatement(statements.ToArray()); 
 		statement = new FunctionDefinition(functionName, parameters, blockStatement);
 		
 	}
@@ -227,6 +227,7 @@ private bool IsAssignment()
 			Statement statement;
 			
 			Statement(out statement);
+			Expect(20);
 			if (statement != null)
 			{
 			   statements.Add(statement);
@@ -251,6 +252,7 @@ private bool IsAssignment()
 				
 			}
 		}
+		Expect(10);
 	}
 
 	void AssignmentStatement(out Statement assign) {

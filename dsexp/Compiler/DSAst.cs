@@ -127,6 +127,7 @@ namespace dsexp.Ast
     {
         private Dictionary<string, DSVariable> variables = new Dictionary<string, DSVariable>();
         private Dictionary<string, DSVariableReference> references = new Dictionary<string, DSVariableReference>();
+        protected Dictionary<DSVariable, Expression> variableMapping = new Dictionary<DSVariable, Expression>(); 
         private static ParameterExpression localCodeContextVariable = Expression.Parameter(typeof(DSCodeContext), "$localContext");
 
         public Dictionary<string, DSVariable> Variables
@@ -194,12 +195,16 @@ namespace dsexp.Ast
             }
         }
 
+        public virtual void PostBind(DSNameBinder binder)
+        {
+
+        }
+
         protected abstract DSVariable BindVariableReference(DSNameBinder binder, DSVariableReference reference);
     }
 
     public class DSAst : ScopeStatement
     {
-        private Dictionary<DSVariable, Expression> globals = new Dictionary<DSVariable, Expression>(); 
         private Statement body;
 
         private static ParameterExpression functionCode = Expression.Variable(typeof(FunctionCode), "$functionCode");
@@ -236,11 +241,11 @@ namespace dsexp.Ast
             throw new NotImplementedException();
         }
 
-        public void PostBind()
+        public override void PostBind(DSNameBinder binder)
         {
             foreach (var variable in Variables.Values)
             {
-                globals[variable] = new LookupVariable(variable.Name, globalContext);
+                variableMapping[variable] = new LookupVariable(variable.Name, globalContext);
             }
         }
 
@@ -259,7 +264,7 @@ namespace dsexp.Ast
 
         public Expression LookupExpression(DSVariable variable)
         {
-            return globals[variable];
+            return variableMapping[variable];
         }
 
         public Expression ReduceToExpression()
@@ -559,14 +564,11 @@ namespace dsexp.Ast
         {
             if (visitor.Visit(this))
             {
-                if (Items != null)
+                for (int i = 0; i < Items.Count(); i++)
                 {
-                    for (int i = 0; i < Items.Count(); i++)
-                    {
-                        Items[i].Visit(visitor);
-                    }
+                    Items[i].Visit(visitor);
                 }
-            } 
+            }
         }
     }
 
@@ -640,18 +642,57 @@ namespace dsexp.Ast
 
         public override void Visit(DSAstVisitor visitor)
         {
-            throw new NotImplementedException();
+            foreach (var statement in Statements)
+            {
+                statement.Visit(visitor);
+            }
         }
     }
 
-    public class FunctionDefintion : ScopeStatement
+    public class Parameter : DSNode
     {
         public string Name
         {
             get; private set;
         }
 
-        public IEnumerable<string> Parameters
+        public DSVariable ParameterVariable
+        {
+            get; set;
+        }
+
+        public ParameterExpression ParameterExpression
+        {
+            get; private set;
+        }
+
+        public Parameter(string name)
+        {
+            Name = name;
+        }
+
+        public override void Visit(DSAstVisitor visitor)
+        {
+            if (visitor.Visit(this))
+            {
+            }
+        }
+
+        public Expression PostBind()
+        {
+            ParameterExpression = System.Linq.Expressions.Expression.Parameter(typeof(object), Name);
+            return ParameterExpression;
+        }
+    }
+
+    public class FunctionDefinition : ScopeStatement
+    {
+        public string Name
+        {
+            get; private set;
+        }
+
+        public IEnumerable<Parameter> Parameters
         {
             get; private set;
         }
@@ -661,10 +702,15 @@ namespace dsexp.Ast
             get; private set;
         }
 
-        public FunctionDefintion(string functionName, string[] parameters, BlockStatement blockStatement)
+        public DSVariable FunctionVariable
+        {
+            get; set;
+        }
+
+        public FunctionDefinition(string functionName, List<string> parameters, BlockStatement blockStatement)
         {
             Name = functionName;
-            Parameters = parameters;
+            Parameters = parameters.Select(p => new Parameter(p));
             Body = blockStatement;
         }
 
@@ -675,7 +721,25 @@ namespace dsexp.Ast
 
         public override void Visit(DSAstVisitor visitor)
         {
-            throw new NotImplementedException();
+            if (visitor.Visit(this))
+            {
+                foreach (var p in Parameters)
+                {
+                    p.Visit(visitor);
+                }
+
+                Body.Visit(visitor);
+            }
+        }
+
+        public override void PostBind(DSNameBinder binder)
+        {
+            foreach (var parameter in Parameters)
+            {
+                variableMapping[parameter.ParameterVariable] = parameter.PostBind();
+            }
+
+            base.PostBind(binder);
         }
 
         protected override DSVariable BindVariableReference(DSNameBinder binder, DSVariableReference reference)

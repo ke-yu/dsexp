@@ -22,10 +22,32 @@ namespace dsexp.Ast
         }
     }
 
+    class DSParameterBinder : DSAstVisitor
+    {
+        private DSNameBinder nameBinder;
+
+        public DSParameterBinder(DSNameBinder nameBinder)
+        {
+            this.nameBinder = nameBinder;
+        }
+
+        public override bool Visit(Parameter node)
+        {
+            node.Parent = nameBinder.CurrentScope;
+            node.ParameterVariable = nameBinder.DefineName(node.Name);
+            return false;
+        }
+    }
+
     public class DSNameBinder : DSAstVisitor
     {
-        private ScopeStatement currentScope;
         private DSDefineBinder defineBinder;
+        private DSParameterBinder parameterBinder;
+
+        public ScopeStatement CurrentScope
+        {
+            get; set;
+        }
 
         internal static void BindAst(DSAst ast)
         {
@@ -36,19 +58,27 @@ namespace dsexp.Ast
         public DSNameBinder()
         {
             defineBinder = new DSDefineBinder(this);
+            parameterBinder = new DSParameterBinder(this);
         }
 
-        public void DefineName(string name)
+        public DSVariable DefineName(string name)
         {
-            currentScope.CreateVariable(name);
+            var variable = CurrentScope.CreateVariable(name);
+            return variable;
+        }
+
+        public DSVariable DefineParameter(string name)
+        {
+            var variable = CurrentScope.CreateVariable(name);
+            return variable;
         }
 
         private void Bind(DSAst ast)
         {
-            currentScope = ast;
+            CurrentScope = ast;
             ast.Visit(this);
             ast.Bind(this);
-            ast.PostBind();
+            ast.PostBind(this);
         }
 
         public override bool Visit(DSAst ast)
@@ -58,76 +88,65 @@ namespace dsexp.Ast
 
         public override bool Visit(NameExpression node)
         {
-            node.Parent = currentScope;
-            node.Reference = currentScope.Reference(node.Name);
+            node.Parent = CurrentScope;
+            node.Reference = CurrentScope.Reference(node.Name);
             return true;
         }
 
         public override bool Visit(ConstantExpression node)
         {
-            node.Parent = currentScope;
+            node.Parent = CurrentScope;
             return true;
         }
 
         public override bool Visit(AssignmentStatement node)
         {
-            node.Parent = currentScope;
+            node.Parent = CurrentScope;
             node.Left.Visit(defineBinder);
             return true;
         }
 
         public override bool Visit(BinaryExpression node)
         {
-            node.Parent = currentScope;
-            node.Left.Visit(this);
-            node.Right.Visit(this);
+            node.Parent = CurrentScope;
             return true;
         }
 
         public override bool Visit(ArrayExpression node)
         {
-            node.Parent = currentScope;
-            foreach (var element in node.Items)
-            {
-                element.Visit(this);
-            }
+            node.Parent = CurrentScope;
             return true;
         }
 
         public override bool Visit(ExpressionStatement node)
         {
-            node.Parent = currentScope;
-            node.Expression.Visit(this);
+            node.Parent = CurrentScope;
             return true;
         }
 
         public override bool Visit(RangeExpression node)
         {
-            node.Parent = currentScope;
-            node.Start.Visit(this);
-            node.End.Visit(this);
+            node.Parent = CurrentScope;
             return true;
         }
 
         public override bool Visit(BlockStatement node)
         {
-            node.Parent = currentScope;
-            foreach (var statement in node.Statements)
-            {
-                statement.Visit(this);
-            }
-
+            node.Parent = CurrentScope;
             return true;
         }
 
-        public override bool Visit(FunctionDefintion node)
+        public override bool Visit(FunctionDefinition node)
         {
-            node.Parent = currentScope;
-            foreach (var statement in node.Statements)
-            {
-                statement.Visit(this);
-            }
+            node.Parent = CurrentScope;
+            node.FunctionVariable = DefineName(node.Name);
+            CurrentScope = node;
+            return true;
+        }
 
+        public override bool Visit(Parameter node)
+        {
+            node.Parent = CurrentScope;
             return true;
         }
     }

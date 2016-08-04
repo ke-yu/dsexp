@@ -53,7 +53,12 @@ namespace dsexp.Ast
             return true;
         }
 
-        public virtual bool Visit(FunctionDefintion node)
+        public virtual bool Visit(FunctionDefinition node)
+        {
+            return true;
+        }
+
+        public virtual bool Visit(Parameter node)
         {
             return true;
         }
